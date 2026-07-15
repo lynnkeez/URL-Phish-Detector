@@ -2,47 +2,111 @@
 {% block title %}Result — URL Phishing Guard{% endblock %}
 {% block content %}
 
-<p class="eyebrow">Classification result</p>
-<h1>What we found</h1>
+<div class="page-header">
+  <p class="eyebrow">Classification Result</p>
+  <h1>What we found</h1>
+</div>
 
 {% if result %}
-<div class="result">
-  <div class="verdict-row">
-    <span class="stamp {{ 'danger' if result.is_phishing else 'safe' }}">
-      {{ 'Phishing' if result.is_phishing else 'Legitimate' }}
-    </span>
-    <span class="checked-url">{{ result.url }}</span>
-  </div>
-
-  <div class="confidence-block">
-    <div class="confidence-label">
-      <span>Model confidence</span>
-      <span>{{ result.confidence }}%</span>
+<div class="result-container">
+  <!-- Verdict Section -->
+  <div class="verdict-section" role="region" aria-label="Classification verdict">
+    <div class="verdict-header">
+      <div class="stamp {{ 'danger' if result.is_phishing else 'safe' }}" aria-label="{{ 'Phishing detected' if result.is_phishing else 'Legitimate URL' }}">
+        <svg class="stamp-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          {% if result.is_phishing %}
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9 9h6v6H9z" fill="white"></path>
+          {% else %}
+          <path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" stroke-width="2" fill="none"></polyline>
+          {% endif %}
+        </svg>
+        {{ 'Phishing Detected' if result.is_phishing else 'Legitimate' }}
+      </div>
+      <div class="verdict-url-section">
+        <p class="verdict-label">Checked URL</p>
+        <p class="verdict-url" title="{{ result.url }}">{{ result.url }}</p>
+      </div>
     </div>
-    <div class="meter">
-      <div class="meter-fill {{ 'danger' if result.is_phishing else 'safe' }}" style="width:{{ result.confidence }}%"></div>
+
+    <!-- Confidence Meter -->
+    <div class="confidence-section">
+      <div class="confidence-header">
+        <span class="confidence-label">Model Confidence</span>
+        <span class="confidence-value" aria-label="Confidence level is {{ result.confidence }} percent">{{ result.confidence }}%</span>
+      </div>
+      <div class="meter">
+        <div class="meter-fill {{ 'danger' if result.is_phishing else 'safe' }}" style="width:{{ result.confidence }}%" role="progressbar" aria-valuenow="{{ result.confidence }}" aria-valuemin="0" aria-valuemax="100" aria-label="Confidence meter"></div>
+      </div>
+      <div class="confidence-info">
+        <p class="confidence-text">
+          {% if result.confidence >= 85 %}
+          High confidence classification
+          {% elif result.confidence >= 60 %}
+          Moderate confidence classification
+          {% else %}
+          Low confidence classification
+          {% endif %}
+        </p>
+      </div>
     </div>
   </div>
 
-  <p class="ledger-title">What drove this result</p>
-  {% for f in result.explanation %}
-  <div class="feature-row">
-    <span class="feature-name">{{ f.feature }}</span>
-    <span class="feature-bar-track"><span class="feature-bar-fill" style="width:{{ f.bar_pct }}%"></span></span>
-    <span class="feature-value">{{ f.value }}</span>
+  <!-- Explanation Section -->
+  <div class="explanation-section" role="region" aria-label="Feature importance analysis">
+    <h2 class="section-title">What drove this result</h2>
+    <p class="explanation-subtitle">Top features from the model's analysis (in order of importance)</p>
+    
+    <div class="features-list">
+      {% for f in result.explanation %}
+      <div class="feature-item">
+        <div class="feature-header">
+          <span class="feature-name">{{ f.feature }}</span>
+          <span class="feature-value">{{ f.value }}</span>
+        </div>
+        <div class="feature-bar-track" role="img" aria-label="{{ f.feature }}: {{ f.bar_pct }}% importance">
+          <div class="feature-bar-fill" style="width:{{ f.bar_pct }}%"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
   </div>
-  {% endfor %}
 
+  <!-- Action Buttons -->
   <div class="result-actions">
-    <a href="{{ url_for('index') }}" class="btn secondary">Check another URL</a>
-    <a href="{{ url_for('history') }}" class="btn secondary">View session history</a>
+    <a href="{{ url_for('index') }}" class="btn primary" title="Check another URL">
+      <svg class="btn-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+      Check another URL
+    </a>
+    <a href="{{ url_for('history') }}" class="btn secondary" title="View session history">
+      <svg class="btn-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="12" cy="12" r="1"></circle>
+        <path d="M12 7v5l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      View history
+    </a>
   </div>
 </div>
+
+<div class="result-footer">
+  <p class="footer-note">Explanation is generated from the model's global feature importances, shown for transparency.</p>
+</div>
+
 {% else %}
-<div class="empty-box">
-  No result yet. <a href="{{ url_for('index') }}" style="color:var(--accent);">Check a URL</a> to see a classification here.
+<div class="empty-state">
+  <div class="empty-icon">📋</div>
+  <h2>No result yet</h2>
+  <p>Check a URL to see its classification here. Results include detailed feature analysis explaining why the model reached its conclusion.</p>
+  <a href="{{ url_for('index') }}" class="btn primary">
+    <svg class="btn-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+    </svg>
+    Check a URL
+  </a>
 </div>
 {% endif %}
 
-<footer>Explanation is generated from the model's global feature importances, shown for transparency (per the concept paper's Q12 requirement).</footer>
 {% endblock %}

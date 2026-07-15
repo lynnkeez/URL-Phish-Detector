@@ -2,49 +2,112 @@
 {% block title %}How it works — URL Phishing Guard{% endblock %}
 {% block content %}
 
-<p class="eyebrow">How it works</p>
-<h1>Under the hood</h1>
-<p class="sub">A quick look at the model and the constraints it was built under &mdash; useful for anyone marking or reviewing this project.</p>
+<div class="page-header">
+  <p class="eyebrow">How it works</p>
+  <h1>Under the hood</h1>
+  <p class="sub">A quick look at the model and the constraints it was built under — useful for anyone marking or reviewing this project.</p>
+</div>
 
-<div class="about-grid">
-  <div class="stat">
-    <div class="num">22</div>
-    <div class="lbl">lexical &amp; structural features extracted per URL</div>
+<!-- Key Stats -->
+<div class="about-stats">
+  <div class="stat-card">
+    <div class="stat-icon">⚙️</div>
+    <div class="stat-num">22</div>
+    <div class="stat-label">Lexical & structural<br>features extracted</div>
   </div>
-  <div class="stat">
-    <div class="num">&lt;2s</div>
-    <div class="lbl">target response time per classification</div>
+  <div class="stat-card">
+    <div class="stat-icon">⚡</div>
+    <div class="stat-num">&lt;2s</div>
+    <div class="stat-label">Target response time<br>per classification</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">📊</div>
+    <div class="stat-num">90%+</div>
+    <div class="stat-label">Target accuracy<br>on test set</div>
   </div>
 </div>
 
-<div class="about-card">
-  <h2>The model</h2>
-  <p>A Random Forest classifier trained on labelled URLs, using only features derived from the URL string itself &mdash; length, entropy, special-character counts, subdomain structure, suspicious keywords, and more. No page content is fetched and no external API is called, so a result is available in real time and works offline.</p>
+<!-- About Cards -->
+<div class="about-cards">
+  <div class="about-card">
+    <div class="card-header">
+      <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+      </svg>
+      <h2>The Model</h2>
+    </div>
+    <p>A Random Forest classifier trained on labelled URLs, using only features derived from the URL string itself — length, entropy, special-character counts, subdomain structure, suspicious TLDs, and other lexical indicators. No network requests, no JavaScript execution, no page rendering.</p>
+  </div>
+
+  <div class="about-card">
+    <div class="card-header">
+      <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M9 12l2 2 4-4M7 12a5 5 0 1110 0 5 5 0 01-10 0z"></path>
+      </svg>
+      <h2>Domain-Aware Evaluation</h2>
+    </div>
+    <p>Evaluation uses a grouped, stratified split (StratifiedGroupKFold) so that URLs sharing the same registrable domain never appear on both sides of the train/test split. A plain random split can overestimate performance when similar domains exist in both sets.</p>
+  </div>
+
+  <div class="about-card">
+    <div class="card-header">
+      <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+      </svg>
+      <h2>Privacy First</h2>
+    </div>
+    <p>URLs are processed in-memory only; nothing is logged or stored beyond the current session. No cookies tracking your checks, no external API calls, no analytics. Everything runs locally in your browser window.</p>
+  </div>
+
+  <div class="about-card">
+    <div class="card-header">
+      <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+      </svg>
+      <h2>Project Constraints</h2>
+    </div>
+    <div class="constraint-list">
+      <div class="constraint-item">
+        <span class="constraint-label">Time</span>
+        <span class="constraint-value">11-week individual sprint timeline, so a shallow, fast-to-train architecture was chosen over deep learning.</span>
+      </div>
+      <div class="constraint-item">
+        <span class="constraint-label">Budget</span>
+        <span class="constraint-value">Zero budget — every tool in the stack is free and open-source (Python, scikit-learn, Flask).</span>
+      </div>
+      <div class="constraint-item">
+        <span class="constraint-label">Technical</span>
+        <span class="constraint-value">URL-level features only — no JavaScript execution or full page rendering to keep inference fast.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="about-card">
+    <div class="card-header">
+      <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <h2>Success Criteria</h2>
+    </div>
+    <div class="success-list">
+      <div class="success-item">
+        <span class="success-label">Accuracy</span>
+        <span class="success-value">≥ 90% on the held-out test set</span>
+      </div>
+      <div class="success-item">
+        <span class="success-label">F1-score</span>
+        <span class="success-value">≥ 0.88 on the held-out test set</span>
+      </div>
+      <div class="success-item">
+        <span class="success-label">Speed</span>
+        <span class="success-value">Classification and result returned within 2 seconds</span>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div class="about-card">
-  <h2>Why domain-aware splitting</h2>
-  <p>Evaluation uses a grouped, stratified split (StratifiedGroupKFold) so that URLs sharing the same registrable domain never appear on both sides of the train/test split. A plain random split can let near-duplicate domains leak between train and test and inflate accuracy &mdash; this keeps the reported metrics honest.</p>
+<div class="about-footer">
+  <p class="footer-note">Built with Python, scikit-learn, and Flask — see the project's concept paper for full methodology and detailed feature engineering documentation.</p>
 </div>
 
-<div class="about-card">
-  <h2>Constraints this project works within</h2>
-  <ul class="constraint-list">
-    <li><b>Time</b> 11-week individual sprint timeline, so a shallow, fast-to-train architecture was chosen over deep learning.</li>
-    <li><b>Budget</b> Zero budget &mdash; every tool in the stack is free and open-source.</li>
-    <li><b>Privacy</b> URLs are processed in-memory only; nothing is logged or stored beyond the current session.</li>
-    <li><b>Technical</b> URL-level features only &mdash; no JavaScript execution or full page rendering.</li>
-  </ul>
-</div>
-
-<div class="about-card">
-  <h2>Success criteria</h2>
-  <ul class="constraint-list">
-    <li><b>Accuracy</b> &ge; 90% on the held-out test set.</li>
-    <li><b>F1-score</b> &ge; 0.88 on the held-out test set.</li>
-    <li><b>Speed</b> Classification and result returned within 2 seconds.</li>
-  </ul>
-</div>
-
-<footer>Built with Python, scikit-learn, and Flask &mdash; see the project's concept paper for full methodology.</footer>
 {% endblock %}

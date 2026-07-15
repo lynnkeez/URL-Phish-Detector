@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}URL Phishing Guard{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<nav class="topnav">
+  <a href="{{ url_for('index') }}" class="{{ 'active' if active == 'check' }}">Check a URL</a>
+  <a href="{{ url_for('result') }}" class="{{ 'active' if active == 'result' }}">Result</a>
+  <a href="{{ url_for('history') }}" class="{{ 'active' if active == 'history' }}">History</a>
+  <a href="{{ url_for('about') }}" class="{{ 'active' if active == 'about' }}">How it works</a>
+</nav>
+
+<div class="wrap">
+{% block content %}{% endblock %}
+</div>
+
+</body>
+</html>

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}History — URL Phishing Guard{% endblock %}
+{% block content %}
+
+<p class="eyebrow">Session history</p>
+<h1>URLs you've checked</h1>
+<p class="sub">Kept only in this browser session &mdash; nothing here is written to a database, and it disappears when your session ends.</p>
+
+{% if history %}
+<div class="history-head">
+  <p class="ledger-title" style="margin:0;">Last {{ history|length }} checked</p>
+  <button class="clear-btn" id="clear-history">Clear history</button>
+</div>
+{% for h in history %}
+<div class="hist-row">
+  <div class="hist-left">
+    <div class="hist-url">{{ h.url }}</div>
+  </div>
+  <span class="tag {{ 'danger' if h.label == 'Phishing' else 'safe' }}">{{ h.label }} &middot; {{ h.confidence }}%</span>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-box">
+  No URLs checked yet this session. <a href="{{ url_for('index') }}" style="color:var(--accent);">Check a URL</a> to start building your history.
+</div>
+{% endif %}
+
+<footer>History is session-only, per the project's no-storage/no-logging requirement (Q13, Q16).</footer>
+
+<script>
+  var clearBtn = document.getElementById('clear-history');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function () {
+      fetch('{{ url_for("clear_history") }}', { method: 'POST' }).then(function () {
+        window.location.reload();
+      });
+    });
+  }
+</script>
+{% endblock %}

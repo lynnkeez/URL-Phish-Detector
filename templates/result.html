@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Result — URL Phishing Guard{% endblock %}
+{% block content %}
+
+<p class="eyebrow">Classification result</p>
+<h1>What we found</h1>
+
+{% if result %}
+<div class="result">
+  <div class="verdict-row">
+    <span class="stamp {{ 'danger' if result.is_phishing else 'safe' }}">
+      {{ 'Phishing' if result.is_phishing else 'Legitimate' }}
+    </span>
+    <span class="checked-url">{{ result.url }}</span>
+  </div>
+
+  <div class="confidence-block">
+    <div class="confidence-label">
+      <span>Model confidence</span>
+      <span>{{ result.confidence }}%</span>
+    </div>
+    <div class="meter">
+      <div class="meter-fill {{ 'danger' if result.is_phishing else 'safe' }}" style="width:{{ result.confidence }}%"></div>
+    </div>
+  </div>
+
+  <p class="ledger-title">What drove this result</p>
+  {% for f in result.explanation %}
+  <div class="feature-row">
+    <span class="feature-name">{{ f.feature }}</span>
+    <span class="feature-bar-track"><span class="feature-bar-fill" style="width:{{ f.bar_pct }}%"></span></span>
+    <span class="feature-value">{{ f.value }}</span>
+  </div>
+  {% endfor %}
+
+  <div class="result-actions">
+    <a href="{{ url_for('index') }}" class="btn secondary">Check another URL</a>
+    <a href="{{ url_for('history') }}" class="btn secondary">View session history</a>
+  </div>
+</div>
+{% else %}
+<div class="empty-box">
+  No result yet. <a href="{{ url_for('index') }}" style="color:var(--accent);">Check a URL</a> to see a classification here.
+</div>
+{% endif %}
+
+<footer>Explanation is generated from the model's global feature importances, shown for transparency (per the concept paper's Q12 requirement).</footer>
+{% endblock %}

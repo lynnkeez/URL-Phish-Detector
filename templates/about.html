@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}How it works — URL Phishing Guard{% endblock %}
+{% block content %}
+
+<p class="eyebrow">How it works</p>
+<h1>Under the hood</h1>
+<p class="sub">A quick look at the model and the constraints it was built under &mdash; useful for anyone marking or reviewing this project.</p>
+
+<div class="about-grid">
+  <div class="stat">
+    <div class="num">22</div>
+    <div class="lbl">lexical &amp; structural features extracted per URL</div>
+  </div>
+  <div class="stat">
+    <div class="num">&lt;2s</div>
+    <div class="lbl">target response time per classification</div>
+  </div>
+</div>
+
+<div class="about-card">
+  <h2>The model</h2>
+  <p>A Random Forest classifier trained on labelled URLs, using only features derived from the URL string itself &mdash; length, entropy, special-character counts, subdomain structure, suspicious keywords, and more. No page content is fetched and no external API is called, so a result is available in real time and works offline.</p>
+</div>
+
+<div class="about-card">
+  <h2>Why domain-aware splitting</h2>
+  <p>Evaluation uses a grouped, stratified split (StratifiedGroupKFold) so that URLs sharing the same registrable domain never appear on both sides of the train/test split. A plain random split can let near-duplicate domains leak between train and test and inflate accuracy &mdash; this keeps the reported metrics honest.</p>
+</div>
+
+<div class="about-card">
+  <h2>Constraints this project works within</h2>
+  <ul class="constraint-list">
+    <li><b>Time</b> 11-week individual sprint timeline, so a shallow, fast-to-train architecture was chosen over deep learning.</li>
+    <li><b>Budget</b> Zero budget &mdash; every tool in the stack is free and open-source.</li>
+    <li><b>Privacy</b> URLs are processed in-memory only; nothing is logged or stored beyond the current session.</li>
+    <li><b>Technical</b> URL-level features only &mdash; no JavaScript execution or full page rendering.</li>
+  </ul>
+</div>
+
+<div class="about-card">
+  <h2>Success criteria</h2>
+  <ul class="constraint-list">
+    <li><b>Accuracy</b> &ge; 90% on the held-out test set.</li>
+    <li><b>F1-score</b> &ge; 0.88 on the held-out test set.</li>
+    <li><b>Speed</b> Classification and result returned within 2 seconds.</li>
+  </ul>
+</div>
+
+<footer>Built with Python, scikit-learn, and Flask &mdash; see the project's concept paper for full methodology.</footer>
+{% endblock %}

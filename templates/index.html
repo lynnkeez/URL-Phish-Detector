@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Check a URL — URL Phishing Guard{% endblock %}
+{% block content %}
+
+<p class="eyebrow">URL Phishing Guard</p>
+<h1>Is this link safe to open?</h1>
+<p class="sub">Paste any URL below. A locally trained model checks its structure against known phishing patterns and shows you exactly why — nothing is sent to a server outside this app.</p>
+
+<form method="POST" action="{{ url_for('index') }}" class="check-form" id="check-form">
+  <span class="chevron">&#10095;</span>
+  <input type="text" name="url" placeholder="https://example.com/login" autocomplete="off" autofocus required>
+  <button type="submit" id="submit-btn">Inspect</button>
+</form>
+<p class="privacy-note">Nothing you submit is stored or shared &mdash; checked in memory, then discarded once your session ends.</p>
+
+{% if error %}
+<div class="error-box">{{ error }}</div>
+{% endif %}
+
+<footer>Runs entirely offline on a Random Forest classifier &mdash; no third-party lookups, no browsing history retained.</footer>
+
+<script>
+  document.getElementById('check-form').addEventListener('submit', function () {
+    var btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Inspecting…';
+  });
+</script>
+{% endblock %}

@@ -2,38 +2,80 @@
 {% block title %}History — URL Phishing Guard{% endblock %}
 {% block content %}
 
-<p class="eyebrow">Session history</p>
-<h1>URLs you've checked</h1>
-<p class="sub">Kept only in this browser session &mdash; nothing here is written to a database, and it disappears when your session ends.</p>
+<div class="page-header">
+  <p class="eyebrow">Session History</p>
+  <h1>URLs you've checked</h1>
+  <p class="sub">Kept only in this browser session — nothing here is written to a database, and it disappears when your session ends.</p>
+</div>
 
 {% if history %}
-<div class="history-head">
-  <p class="ledger-title" style="margin:0;">Last {{ history|length }} checked</p>
-  <button class="clear-btn" id="clear-history">Clear history</button>
-</div>
-{% for h in history %}
-<div class="hist-row">
-  <div class="hist-left">
-    <div class="hist-url">{{ h.url }}</div>
+<div class="history-container">
+  <!-- History Header -->
+  <div class="history-header">
+    <div>
+      <p class="history-count">{{ history|length }} URL{% if history|length != 1 %}s{% endif %} checked this session</p>
+    </div>
+    <button class="clear-btn" id="clear-history" aria-label="Clear all history">
+      <svg class="clear-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6h14zM10 11v6M14 11v6"></path>
+      </svg>
+      Clear history
+    </button>
   </div>
-  <span class="tag {{ 'danger' if h.label == 'Phishing' else 'safe' }}">{{ h.label }} &middot; {{ h.confidence }}%</span>
+
+  <!-- History List -->
+  <div class="history-list" role="list">
+    {% for h in history %}
+    <div class="hist-row" role="listitem">
+      <div class="hist-content">
+        <div class="hist-url" title="{{ h.url }}">{{ h.url }}</div>
+        <div class="hist-meta">
+          <time class="hist-time">{{ loop.revindex }} of {{ history|length }}</time>
+        </div>
+      </div>
+      <div class="hist-result">
+        <span class="tag {{ 'danger' if h.label == 'Phishing' else 'safe' }}" aria-label="{{ h.label }}, confidence {{ h.confidence }}%">
+          {{ h.label }}
+        </span>
+        <span class="confidence-badge">{{ h.confidence }}%</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
 </div>
-{% endfor %}
+
 {% else %}
-<div class="empty-box">
-  No URLs checked yet this session. <a href="{{ url_for('index') }}" style="color:var(--accent);">Check a URL</a> to start building your history.
+<div class="empty-state">
+  <div class="empty-icon">📝</div>
+  <h2>No URLs checked yet</h2>
+  <p>Your check history will appear here. All results are kept private and cleared when you close your session.</p>
+  <a href="{{ url_for('index') }}" class="btn primary">
+    <svg class="btn-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+    </svg>
+    Check your first URL
+  </a>
 </div>
 {% endif %}
 
-<footer>History is session-only, per the project's no-storage/no-logging requirement (Q13, Q16).</footer>
+<div class="history-footer">
+  <p class="footer-note">History is session-only and never logged or stored — all data is discarded when you close this window.</p>
+</div>
 
 <script>
   var clearBtn = document.getElementById('clear-history');
   if (clearBtn) {
     clearBtn.addEventListener('click', function () {
-      fetch('{{ url_for("clear_history") }}', { method: 'POST' }).then(function () {
-        window.location.reload();
-      });
+      if (confirm('Are you sure you want to clear your session history?')) {
+        fetch('{{ url_for("clear_history") }}', { method: 'POST' })
+          .then(function () {
+            window.location.reload();
+          })
+          .catch(function (err) {
+            console.error('Error clearing history:', err);
+            alert('Failed to clear history. Please try again.');
+          });
+      }
     });
   }
 </script>

@@ -1,10 +1,8 @@
 # URL Phishing Guard
 
-A locally-run, machine learning-powered phishing URL detection system. Built
-as an individual project for APT3065 (Concept Paper: LynnBetty Mawira,
-669931). Classifies submitted URLs as **Phishing** or **Legitimate** in
+A locally run, machine learning-powered phishing URL detection system. Classifies submitted URLs as **Phishing** or **Legitimate** in
 real time using a Random Forest classifier trained on lexical and
-structural URL features — no external API calls, no URL storage or
+structural URL features. There are no external API calls, no URL storage or
 logging, sub-2-second response time.
 
 ## Project structure
@@ -46,12 +44,6 @@ cd phishguard
 python -m venv venv
 source venv/bin/activate      # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-```
-
-## Generate the dataset (if `data/urls.csv` isn't already present)
-
-```bash
-python src/dataset_generator.py
 ```
 
 ## Train the model

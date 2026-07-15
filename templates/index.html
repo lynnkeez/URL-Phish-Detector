@@ -2,28 +2,89 @@
 {% block title %}Check a URL — URL Phishing Guard{% endblock %}
 {% block content %}
 
-<p class="eyebrow">URL Phishing Guard</p>
-<h1>Is this link safe to open?</h1>
-<p class="sub">Paste any URL below. A locally trained model checks its structure against known phishing patterns and shows you exactly why — nothing is sent to a server outside this app.</p>
+<div class="page-header">
+  <p class="eyebrow">URL Phishing Guard</p>
+  <h1>Is this link safe to open?</h1>
+  <p class="sub">Paste any URL below. A locally trained model checks its structure against known phishing patterns and shows you exactly why — nothing is sent to a server outside this app.</p>
+</div>
 
-<form method="POST" action="{{ url_for('index') }}" class="check-form" id="check-form">
-  <span class="chevron">&#10095;</span>
-  <input type="text" name="url" placeholder="https://example.com/login" autocomplete="off" autofocus required>
-  <button type="submit" id="submit-btn">Inspect</button>
-</form>
-<p class="privacy-note">Nothing you submit is stored or shared &mdash; checked in memory, then discarded once your session ends.</p>
+<div class="check-container">
+  <form method="POST" action="{{ url_for('index') }}" class="check-form" id="check-form">
+    <div class="form-group">
+      <label for="url-input" class="sr-only">Enter URL to check</label>
+      <input 
+        type="url" 
+        id="url-input"
+        name="url" 
+        placeholder="https://example.com/login" 
+        autocomplete="off" 
+        autofocus 
+        required
+        aria-label="Enter the URL you want to check"
+        class="url-input"
+      >
+      <button type="submit" id="submit-btn" class="submit-btn" aria-busy="false">
+        <span class="btn-text">Inspect</span>
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </button>
+    </div>
+    <p class="privacy-note">
+      <svg class="privacy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+      </svg>
+      Nothing you submit is stored or shared — checked in memory, then discarded once your session ends.
+    </p>
+  </form>
 
-{% if error %}
-<div class="error-box">{{ error }}</div>
-{% endif %}
+  {% if error %}
+  <div class="error-box" role="alert">
+    <svg class="error-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="12" cy="12" r="10"></circle>
+      <path d="M12 8v4M12 16h.01" stroke="white" stroke-width="2" fill="none"></path>
+    </svg>
+    <div>
+      <strong>Invalid URL</strong>
+      <p>{{ error }}</p>
+    </div>
+  </div>
+  {% endif %}
+</div>
 
-<footer>Runs entirely offline on a Random Forest classifier &mdash; no third-party lookups, no browsing history retained.</footer>
+<div class="info-section">
+  <p class="section-title">How it works</p>
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-icon">🔍</div>
+      <h3>Structural Analysis</h3>
+      <p>Analyzes URL length, entropy, special characters, and domain structure</p>
+    </div>
+    <div class="info-card">
+      <div class="info-icon">⚡</div>
+      <h3>Instant Results</h3>
+      <p>Classification completed in under 2 seconds with detailed explanations</p>
+    </div>
+    <div class="info-card">
+      <div class="info-icon">🛡️</div>
+      <h3>100% Private</h3>
+      <p>Random Forest model runs locally—no external lookups, no logging</p>
+    </div>
+  </div>
+</div>
 
 <script>
   document.getElementById('check-form').addEventListener('submit', function () {
     var btn = document.getElementById('submit-btn');
+    var btnText = btn.querySelector('.btn-text');
     btn.disabled = true;
-    btn.textContent = 'Inspecting…';
+    btn.setAttribute('aria-busy', 'true');
+    btnText.textContent = 'Inspecting…';
+  });
+
+  // Prevent form submission with invalid URLs
+  document.getElementById('url-input').addEventListener('invalid', function() {
+    this.setAttribute('aria-invalid', 'true');
   });
 </script>
 {% endblock %}

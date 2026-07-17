@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block title %}Detailed Explanation — URL Phishing Guard{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <p class="eyebrow">Detailed Analysis</p>
+  <h1>Why was this URL {{ 'flagged' if result.is_phishing else 'approved' }}?</h1>
+</div>
+
+{% if result %}
+<div class="explanation-container">
+  
+  <!-- URL and Verdict Section -->
+  <div class="explanation-verdict">
+    <div class="verdict-badge {{ 'danger' if result.is_phishing else 'safe' }}">
+      <svg class="verdict-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        {% if result.is_phishing %}
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M9 9h6v6H9z" fill="white"></path>
+        {% else %}
+        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" stroke-width="2" fill="none"></polyline>
+        {% endif %}
+      </svg>
+      <div>
+        <p class="verdict-title">{{ 'Phishing Detected' if result.is_phishing else 'Legitimate URL' }}</p>
+        <p class="verdict-url-display">{{ result.url }}</p>
+      </div>
+    </div>
+    <div class="confidence-display">
+      <span class="confidence-label">Model Confidence:</span>
+      <span class="confidence-percent">{{ result.confidence }}%</span>
+    </div>
+  </div>
+
+  <!-- Summary Section -->
+  <div class="explanation-section">
+    <h2>Analysis Summary</h2>
+    <div class="summary-box {{ 'danger-box' if result.is_phishing else 'safe-box' }}">
+      <p>
+        {% if result.is_phishing %}
+          This URL exhibits characteristics commonly found in phishing attacks. The model identified {{ result.explanation|length }} 
+          suspicious features that contributed to this classification with {{ result.confidence }}% confidence.
+        {% else %}
+          This URL appears to be legitimate based on standard URL characteristics. The model analyzed various features 
+          and found no significant indicators of phishing with {{ result.confidence }}% confidence.
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  <!-- Top Contributing Features -->
+  <div class="explanation-section">
+    <h2>Top Contributing Features</h2>
+    <p class="section-description">
+      These are the features that most strongly influenced the {{ 'phishing' if result.is_phishing else 'legitimate' }} classification:
+    </p>
+    
+    <div class="features-detailed">
+      {% for f in result.explanation %}
+      <div class="feature-card">
+        <div class="feature-card-header">
+          <span class="feature-rank">#{{ loop.index }}</span>
+          <span class="feature-title">{{ f.feature }}</span>
+          <span class="importance-score" title="Importance score">
+            {{ f.importance|round(3) }}
+          </span>
+        </div>
+        
+        <div class="feature-value-display">
+          <span class="value-label">Value:</span>
+          <span class="value-text">{{ f.value }}</span>
+        </div>
+        
+        <div class="importance-bar">
+          <div class="importance-bar-fill" style="width:{{ f.bar_pct }}%"></div>
+          <span class="importance-pct">{{ f.bar_pct|round(0)|int }}%</span>
+        </div>
+        
+        <p class="feature-description">
+          {% if f.feature == 'URLLength' %}
+            The total length of the URL. Longer URLs can be suspicious as they're often used to obscure the true destination.
+          {% elif f.feature == 'DomainLength' %}
+            The length of the domain name. Excessively long domain names may indicate obfuscation attempts.
+          {% elif f.feature == 'IsDomainIP' %}
+            Whether the domain is an IP address instead of a proper domain. Phishing sites often use raw IP addresses.
+          {% elif f.feature == 'TLDLength' %}
+            The length of the top-level domain (.com, .org, etc.). Unusual TLD lengths can be a red flag.
+          {% elif f.feature == 'NoOfSubDomain' %}
+            The number of subdomains. Multiple subdomains may indicate an attempt to look like a legitimate site.
+          {% elif f.feature == 'HasObfuscation' %}
+            Whether the URL contains obfuscation characters (% or @). These are commonly used in phishing URLs.
+          {% elif f.feature == 'ObfuscationRatio' %}
+            The ratio of obfuscation characters in the URL. Higher ratios suggest deliberate URL obfuscation.
+          {% elif f.feature == 'LetterRatioInURL' %}
+            The proportion of letters in the URL. Unusual ratios may indicate encoding or obfuscation.
+          {% elif f.feature == 'DegitRatioInURL' %}
+            The proportion of digits in the URL. Phishing URLs often have unusual digit distributions.
+          {% elif f.feature == 'IsHTTPS' %}
+            Whether the URL uses HTTPS encryption. Lack of HTTPS is a warning sign, though not definitive.
+          {% elif f.feature == 'HasPasswordField' %}
+            Whether the URL contains password-related keywords. Phishing sites often ask for passwords.
+          {% elif f.feature == 'Bank' %}
+            Whether the URL contains banking-related keywords. Common target for phishing attacks.
+          {% elif f.feature == 'Pay' %}
+            Whether the URL contains payment-related keywords. Often impersonated by phishing sites.
+          {% elif f.feature == 'Crypto' %}
+            Whether the URL contains cryptocurrency-related keywords. Increasingly targeted by phishers.
+          {% elif f.feature == 'URLSimilarityIndex' %}
+            The entropy of the domain name. Low entropy (repetitive characters) may indicate phishing.
+          {% elif f.feature == 'CharContinuationRate' %}
+            How many characters repeat consecutively in the URL. Unusual patterns suggest obfuscation.
+          {% elif f.feature == 'TLDLegitimateProb' %}
+            Whether the TLD (.com, .org, etc.) is commonly used for legitimate sites. Obscure TLDs are suspicious.
+          {% elif f.feature == 'URLCharProb' %}
+            The proportion of alphanumeric characters. Non-standard character distributions can signal phishing.
+          {% elif f.feature == 'NoOfEqualsInURL' %}
+            The number of '=' characters. Many equals signs suggest query parameters, common in phishing.
+          {% elif f.feature == 'NoOfQMarkInURL' %}
+            The number of '?' characters. Multiple question marks indicate complex parameter structures.
+          {% elif f.feature == 'NoOfAmpersandInURL' %}
+            The number of '&' characters. Multiple ampersands suggest encoded parameters.
+          {% else %}
+            {{ f.feature }} - This feature contributed to the model's decision.
+          {% endif %}
+        </p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Risk Indicators Section -->
+  <div class="explanation-section">
+    <h2>What This Means</h2>
+    <div class="risk-info {{ 'risk-danger' if result.is_phishing else 'risk-safe' }}">
+      {% if result.is_phishing %}
+        <div class="risk-header">
+          <svg class="risk-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path>
+          </svg>
+          <h3>This URL shows signs of a phishing attack</h3>
+        </div>
+        <ul class="risk-list">
+          <li><strong>Do not click</strong> on this link if you weren't expecting it</li>
+          <li><strong>Do not enter credentials</strong> — legitimate sites never ask for passwords via links</li>
+          <li><strong>Report it</strong> to the appropriate email provider or security team</li>
+          <li><strong>Verify directly</strong> by visiting the official website of the organization</li>
+        </ul>
+      {% else %}
+        <div class="risk-header">
+          <svg class="risk-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
+          </svg>
+          <h3>This URL appears to be legitimate</h3>
+        </div>
+        <ul class="risk-list">
+          <li><strong>Standard characteristics</strong> — the URL follows normal patterns for legitimate websites</li>
+          <li><strong>Safe to visit</strong> — though always exercise caution with unknown senders</li>
+          <li><strong>Note:</strong> This tool is not a substitute for full security scanning</li>
+          <li><strong>Trust your instincts</strong> — if something feels wrong, it might be</li>
+        </ul>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Caveats Section -->
+  <div class="explanation-section disclaimer-section">
+    <h2>Important Caveats</h2>
+    <div class="caveats-list">
+      <div class="caveat-item">
+        <span class="caveat-icon">⚠️</span>
+        <div>
+          <strong>Model Limitations:</strong> This detector uses pattern matching and cannot detect sophisticated 
+          zero-day attacks or brand-new phishing campaigns.
+        </div>
+      </div>
+      <div class="caveat-item">
+        <span class="caveat-icon">⚠️</span>
+        <div>
+          <strong>Content Not Analyzed:</strong> This tool only examines the URL structure. It doesn't analyze 
+          page content, SSL certificates, or server reputation.
+        </div>
+      </div>
+      <div class="caveat-item">
+        <span class="caveat-icon">⚠️</span>
+        <div>
+          <strong>False Positives/Negatives:</strong> Like all security tools, this detector can have both 
+          false positives and false negatives. Always verify important communications.
+        </div>
+      </div>
+      <div class="caveat-item">
+        <span class="caveat-icon">⚠️</span>
+        <div>
+          <strong>For Security Teams:</strong> Use this as one signal among many. Multi-layered security 
+          is essential for robust protection.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="explanation-actions">
+    <a href="{{ url_for('result') }}" class="btn secondary" title="Back to result">
+      <svg class="btn-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M19 12H5M12 19l-7-7 7-7"></path>
+      </svg>
+      Back to result
+    </a>
+    <a href="{{ url_for('index') }}" class="btn primary" title="Check another URL">
+      <svg class="btn-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+      Check another URL
+    </a>
+  </div>
+
+</div>
+
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">📋</div>
+  <h2>No analysis yet</h2>
+  <p>Check a URL first to see detailed analysis of why it was flagged or approved.</p>
+  <a href="{{ url_for('index') }}" class="btn primary">
+    <svg class="btn-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+    </svg>
+    Check a URL
+  </a>
+</div>
+{% endif %}
+
+{% endblock %}

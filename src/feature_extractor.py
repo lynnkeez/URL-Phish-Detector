@@ -1,145 +1,116 @@
-"""
-PhishGuard - Feature Extractor
-Extracts 30 URL-based features for ML classification.
-No external API calls needed — all features derived from URL structure.
+"""Shared, URL-only feature pipeline for PhishGuard.
+
+These features are intentionally limited to the submitted URL.  The same
+function is used to create the training matrix and to make live predictions;
+no webpage content, DNS lookup, or network request is required.
 """
 
-import re
-import math
-from urllib.parse import urlparse
 from collections import Counter
+import ipaddress
+import math
+import re
+from urllib.parse import urlparse
 
-# Common legitimate TLDs
-LEGITIMATE_TLDS = {'.com', '.org', '.net', '.edu', '.gov', '.io', '.co'}
-
-# Suspicious keywords often found in phishing URLs
-PHISHING_KEYWORDS = [
-    'login', 'signin', 'sign-in', 'verify', 'secure', 'account', 'update',
-    'banking', 'paypal', 'apple', 'amazon', 'google', 'microsoft', 'facebook',
-    'password', 'credential', 'confirm', 'wallet', 'billing', 'invoice',
-    'support', 'helpdesk', 'alert', 'suspended', 'limited', 'unlock'
-]
-
-# Well-known brand names targeted by phishers
-BRAND_NAMES = [
-    'paypal', 'apple', 'amazon', 'google', 'microsoft', 'facebook',
-    'netflix', 'instagram', 'twitter', 'linkedin', 'dropbox', 'chase',
-    'wellsfargo', 'bankofamerica', 'citibank', 'barclays', 'hsbc'
-]
+LEGITIMATE_TLDS = {"com", "org", "net", "edu", "gov", "io", "co", "uk", "de", "ke"}
+SUSPICIOUS_TLDS = {"zip", "mov", "top", "xyz", "click", "gq", "tk", "ml", "cf", "work"}
+PHISHING_KEYWORDS = {
+    "login", "signin", "sign-in", "verify", "secure", "account", "update",
+    "banking", "password", "credential", "confirm", "wallet", "billing",
+    "invoice", "support", "alert", "suspended", "unlock",
+}
+BRAND_NAMES = {
+    "paypal", "apple", "amazon", "google", "microsoft", "facebook", "netflix",
+    "instagram", "linkedin", "dropbox", "chase", "wellsfargo", "barclays", "hsbc",
+}
 
 
-def _entropy(string: str) -> float:
-    """Shannon entropy of a string (measures randomness)."""
-    if not string:
-        return 0.0
-    freq = Counter(string)
-    length = len(string)
-    return -sum((c / length) * math.log2(c / length) for c in freq.values())
+MAX_URL_LENGTH = 255
 
 
-def extract_features(url: str) -> dict:
-    """
-    Extract 30 features from a URL.
-    Returns a dict with feature names and values.
-    """
-    features = {}
-
-    # ── Parse URL ──────────────────────────────────────────────────────────
-    if not url.startswith(('http://', 'https://')):
-        url = 'http://' + url
-
+def normalise_url(url: str, enforce_length: bool = True) -> str:
+    """Return a browser-style URL with a scheme, or raise ValueError."""
+    value = (url or "").strip()
+    if not value or (enforce_length and len(value) > MAX_URL_LENGTH) or any(c.isspace() for c in value):
+        raise ValueError(f"Enter a valid URL no longer than {MAX_URL_LENGTH} characters.")
+    if not re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*://", value):
+        value = "http://" + value
+    parsed = urlparse(value)
     try:
-        parsed = urlparse(url)
-    except Exception:
-        # Return all-zero features for unparseable URLs
-        return {f'f{i}': 0 for i in range(30)}
-
-    scheme   = parsed.scheme or ''
-    netloc   = parsed.netloc or ''
-    path     = parsed.path or ''
-    query    = parsed.query or ''
-    fragment = parsed.fragment or ''
-    full_url = url.lower()
-
-    # Strip port from netloc for hostname
-    hostname = netloc.split(':')[0].lower()
-    # Remove www. prefix
-    domain = re.sub(r'^www\.', '', hostname)
-
-    # Subdomain analysis
-    parts = domain.split('.')
-    tld      = '.' + parts[-1] if len(parts) > 1 else ''
-    sld      = parts[-2] if len(parts) > 1 else ''
-    subdomains = parts[:-2] if len(parts) > 2 else []
-
-    # ── URL-level features ─────────────────────────────────────────────────
-    features['url_length']          = len(url)
-    features['url_entropy']         = round(_entropy(url), 4)
-    features['digit_ratio']         = sum(c.isdigit() for c in url) / max(len(url), 1)
-    features['special_char_count']  = sum(c in '-_.~!*()@%' for c in url)
-    features['dot_count']           = url.count('.')
-    features['hyphen_count']        = url.count('-')
-    features['slash_count']         = url.count('/')
-    features['at_symbol']           = int('@' in url)
-    features['double_slash']        = int('//' in path)
-    features['hex_encoding']        = int('%' in url)
-
-    # ── Scheme / protocol features ─────────────────────────────────────────
-    features['has_https']           = int(scheme == 'https')
-    features['has_http']            = int(scheme == 'http')
-
-    # ── Hostname / domain features ─────────────────────────────────────────
-    features['hostname_length']     = len(hostname)
-    features['subdomain_count']     = len(subdomains)
-    features['subdomain_length']    = sum(len(s) for s in subdomains)
-    features['domain_length']       = len(sld)
-    features['domain_entropy']      = round(_entropy(sld), 4)
-    features['ip_address']          = int(bool(
-        re.match(r'^\d{1,3}(\.\d{1,3}){3}$', hostname)
-    ))
-    features['legitimate_tld']      = int(tld in LEGITIMATE_TLDS)
-    features['tld_length']          = len(tld)
-    features['hyphen_in_domain']    = int('-' in sld)
-    features['digit_in_domain']     = int(any(c.isdigit() for c in sld))
-
-    # ── Path features ──────────────────────────────────────────────────────
-    features['path_length']         = len(path)
-    features['path_depth']          = path.count('/')
-    features['file_extension']      = int(bool(
-        re.search(r'\.(php|asp|aspx|jsp|cgi|exe|html|htm)$', path.lower())
-    ))
-
-    # ── Query / fragment features ──────────────────────────────────────────
-    features['has_query']           = int(bool(query))
-    features['query_length']        = len(query)
-    features['has_fragment']        = int(bool(fragment))
-
-    # ── Semantic / keyword features ────────────────────────────────────────
-    features['phishing_keyword']    = int(any(kw in full_url for kw in PHISHING_KEYWORDS))
-    features['brand_in_subdomain']  = int(any(
-        brand in '.'.join(subdomains).lower() for brand in BRAND_NAMES
-    ))
-
-    return features
+        hostname = parsed.hostname
+        parsed.port  # Validates malformed port syntax.
+    except ValueError as exc:
+        raise ValueError("Enter a valid http or https URL.") from exc
+    if parsed.scheme not in {"http", "https"} or not hostname:
+        raise ValueError("Enter a valid http or https URL.")
+    return value
 
 
-def features_to_vector(features: dict) -> list:
-    """Return feature values as an ordered list (consistent column order)."""
-    return list(features.values())
+def _entropy(value: str) -> float:
+    if not value:
+        return 0.0
+    frequencies = Counter(value)
+    return -sum((count / len(value)) * math.log2(count / len(value)) for count in frequencies.values())
 
 
-FEATURE_NAMES = list(extract_features('http://example.com').keys())
+def _is_ip(hostname: str) -> int:
+    try:
+        ipaddress.ip_address(hostname)
+        return 1
+    except ValueError:
+        return 0
 
 
-if __name__ == '__main__':
-    # Quick sanity check
-    test_urls = [
-        'https://www.google.com/search?q=python',
-        'http://paypal-secure-login.suspicious-site.xyz/update/verify.php?user=123',
-        'http://192.168.1.1/admin',
-        'https://github.com/features',
-    ]
-    for u in test_urls:
-        f = extract_features(u)
-        print(f"\n{u[:60]}")
-        print({k: v for k, v in f.items() if v != 0})
+def extract_features(url: str, enforce_length: bool = True) -> dict:
+    """Extract a stable, numeric feature dictionary from one URL.
+
+    ``enforce_length=False`` is reserved for historical training data, where
+    long URLs are valid observations even though the web form rejects them.
+    """
+    normalised = normalise_url(url, enforce_length=enforce_length)
+    parsed = urlparse(normalised)
+    hostname = (parsed.hostname or "").lower()
+    host_parts = hostname.split(".")
+    tld = host_parts[-1] if len(host_parts) > 1 else ""
+    domain = host_parts[-2] if len(host_parts) > 1 else hostname
+    subdomains = host_parts[:-2] if len(host_parts) > 2 else []
+    path_query = f"{parsed.path}?{parsed.query}".lower()
+    lower_url = normalised.lower()
+    keyword_count = sum(keyword in lower_url for keyword in PHISHING_KEYWORDS)
+    brand_in_subdomain = any(brand in ".".join(subdomains) for brand in BRAND_NAMES)
+
+    return {
+        "url_length": len(normalised),
+        "url_entropy": round(_entropy(normalised), 4),
+        "hostname_length": len(hostname),
+        "domain_length": len(domain),
+        "domain_entropy": round(_entropy(domain), 4),
+        "tld_length": len(tld),
+        "subdomain_count": len(subdomains),
+        "path_length": len(parsed.path),
+        "path_depth": parsed.path.count("/"),
+        "query_length": len(parsed.query),
+        "digit_ratio": round(sum(c.isdigit() for c in normalised) / len(normalised), 4),
+        "special_char_count": sum(c in "-_.~!*()@%" for c in normalised),
+        "dot_count": normalised.count("."),
+        "hyphen_count": normalised.count("-"),
+        "slash_count": normalised.count("/"),
+        "has_https": int(parsed.scheme == "https"),
+        "ip_address": _is_ip(hostname),
+        "has_port": int(parsed.port is not None),
+        "has_at_symbol": int("@" in normalised),
+        "has_encoded_char": int("%" in normalised),
+        "has_double_slash_path": int("//" in parsed.path),
+        "has_query": int(bool(parsed.query)),
+        "has_fragment": int(bool(parsed.fragment)),
+        "file_extension": int(bool(re.search(r"\.(php|asp|aspx|jsp|cgi|exe|html?)$", parsed.path.lower()))),
+        "hyphen_in_domain": int("-" in domain),
+        "digit_in_domain": int(any(c.isdigit() for c in domain)),
+        "legitimate_tld": int(tld in LEGITIMATE_TLDS),
+        "suspicious_tld": int(tld in SUSPICIOUS_TLDS),
+        "phishing_keyword_count": keyword_count,
+        "brand_in_subdomain": int(brand_in_subdomain),
+        "brand_in_path_or_query": int(any(brand in path_query for brand in BRAND_NAMES)),
+    }
+
+
+FEATURE_NAMES = list(extract_features("https://example.com").keys())

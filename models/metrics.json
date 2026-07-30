@@ -1,32 +1,32 @@
 {
-  "accuracy": 1.0,
-  "f1_score": 1.0,
-  "precision": 1.0,
-  "recall": 1.0,
-  "roc_auc": 1.0,
+  "accuracy": 0.9975,
+  "f1_score": 0.997,
+  "precision": 0.9996,
+  "recall": 0.9946,
+  "roc_auc": 0.9986,
   "train_size": 188636,
   "test_size": 47159,
-  "n_features": 52,
-  "top_features": {
-    "URLSimilarityIndex": 0.2423,
-    "NoOfExternalRef": 0.124,
-    "LineOfCode": 0.1119,
-    "NoOfSelfRef": 0.0849,
-    "NoOfImage": 0.0812,
-    "NoOfJS": 0.0581,
-    "HasCopyrightInfo": 0.0553,
-    "HasSocialNet": 0.0496,
-    "NoOfCSS": 0.0301,
-    "HasDescription": 0.0234
-  },
+  "n_features": 31,
   "confusion_matrix": [
     [
-      20189,
-      0
+      26961,
+      9
     ],
     [
-      0,
-      26970
+      110,
+      20079
     ]
-  ]
+  ],
+  "feature_importance": {
+    "has_https": 0.4174223694532712,
+    "slash_count": 0.12529479240444827,
+    "path_depth": 0.11186834699225198,
+    "path_length": 0.11060828632746823,
+    "digit_ratio": 0.050751894584791124,
+    "url_length": 0.04591293468475475,
+    "url_entropy": 0.019394691438496293,
+    "suspicious_tld": 0.01519837571821536,
+    "special_char_count": 0.014617376871184974,
+    "subdomain_count": 0.013543257736903146
+  }
 }

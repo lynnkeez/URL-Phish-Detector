@@ -56,7 +56,7 @@
   <!-- Explanation Section -->
   <div class="explanation-section" role="region" aria-label="Feature importance analysis">
     <h2 class="section-title">What drove this result</h2>
-    <p class="explanation-subtitle">Top features from the model's analysis (in order of importance)</p>
+    <p class="explanation-subtitle">URL-specific indicators found during this check</p>
     
     <div class="features-list">
       {% for f in result.explanation %}
@@ -92,7 +92,7 @@
 </div>
 
 <div class="result-footer">
-  <p class="footer-note">Explanation is generated from the model's global feature importances, shown for transparency.</p>
+  <p class="footer-note">This is URL-only risk guidance. A legitimate-looking address is not a guarantee that a website is safe.</p>
 </div>
 
 {% else %}
